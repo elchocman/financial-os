@@ -1,0 +1,39 @@
+name: Daily Portfolio Snapshot
+
+on:
+  schedule:
+    - cron: '30 21 * * *'   # 18:30 Chile time (UTC-3)
+  workflow_dispatch:          # allow manual trigger from GitHub UI
+
+jobs:
+  daily-run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r backend/requirements.txt
+
+      - name: Run daily worker (FX + prices + holdings + snapshot)
+        run: |
+          cd backend
+          python -m app.workers.daily_runner
+        env:
+          SUPABASE_URL:               ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY:  ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          FINTUAL_EMAIL:              ${{ secrets.FINTUAL_EMAIL }}
+          FINTUAL_PASSWORD:           ${{ secrets.FINTUAL_PASSWORD }}
+          RACIONAL_LTM_SHARES:        ${{ secrets.RACIONAL_LTM_SHARES }}
+          RACIONAL_CFISP500_SHARES:   ${{ secrets.RACIONAL_CFISP500_SHARES }}
+          RACIONAL_META_SHARES:       ${{ secrets.RACIONAL_META_SHARES }}
+          RACIONAL_AMZN_SHARES:       ${{ secrets.RACIONAL_AMZN_SHARES }}
+          RACIONAL_MSFT_SHARES:       ${{ secrets.RACIONAL_MSFT_SHARES }}
+          BINANCE_BTC_AMOUNT:         ${{ secrets.BINANCE_BTC_AMOUNT }}
